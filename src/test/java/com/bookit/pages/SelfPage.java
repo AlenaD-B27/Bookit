@@ -6,9 +6,6 @@ import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
 
 public class SelfPage extends TopNavigationBar{
-	public SelfPage() {
-		PageFactory.initElements(Driver.get(), this);
-	}
 	
 	
 	
