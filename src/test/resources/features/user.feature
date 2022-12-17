@@ -1,6 +1,7 @@
 
 Feature: User Verification
 
+  @wip
   Scenario: verify information about logged user
     Given I logged Bookit api as a "team-leader"
     When I sent get request to "/api/users/me" endpoint
@@ -18,7 +19,7 @@ Feature: User Verification
 
 
 # API vs DB vs UI ---> Three point verification
-   @db @ui
+  @wip @db @ui
   Scenario: three point/layer (UI,API,DATABASE)
     Given user logs in using "team-leader" credentials
     And user is on the my self page
