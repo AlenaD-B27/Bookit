@@ -12,9 +12,11 @@ import io.cucumber.java.en.When;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
 import org.junit.Assert;
 
 import java.util.Map;
+import java.util.Objects;
 
 import static io.restassured.RestAssured.*;
 
@@ -23,6 +25,8 @@ public class ApiStepDefs {
     String token;
     Response response;
     String email;
+
+    Map<String, Object> postInfo;
 
     @Given("I logged Bookit api as a {string}")
     public void i_logged_bookit_api_as_a(String role) {
@@ -136,6 +140,46 @@ public class ApiStepDefs {
                 .pathParam("id", idToDelete)
                 .delete(Environment.BASE_URL + "/api/students/{id}")
                 .then().statusCode(204);
+    }
+
+
+
+    @When("Users sends POST request to {string} with following info:")
+    public void users_sends_post_request_to_with_following_info(String endPoint, Map<String, Object> teamInfo) {
+
+        response = given().accept(ContentType.JSON).header("Authorization", token)
+                .queryParams(teamInfo)
+                .post(Environment.BASE_URL + endPoint).prettyPeek();
+
+        Assert.assertEquals(201, response.getStatusCode());
+
+        postInfo = teamInfo;
+
+    }
+    @Then("Database should persist same team info")
+    public void database_should_persist_same_team_info() {
+
+
+
+        DB_Util.runQuery("select name, batch_number, c.location from team t left join batch b\n" +
+                "    on t.batch_number = b.number\n" +
+                "left join campus c\n" +
+                "    on t.campus_id = c.id\n" +
+                "where t.id = " + response.jsonPath().getInt("entryiId") + ";");
+
+        Map<String, String> expectedTeamInfoFromDB = DB_Util.getRowMap(1);
+
+        Assert.assertEquals(expectedTeamInfoFromDB.get("name"),postInfo.get("team-name"));
+        Assert.assertEquals(expectedTeamInfoFromDB.get("batch_number"),postInfo.get("batch-number"));
+        Assert.assertEquals(expectedTeamInfoFromDB.get("location"),postInfo.get("campus-location"));
+
+    }
+    @Then("User deletes previously created team")
+    public void user_deletes_previously_created_team() {
+        given().accept(ContentType.JSON).header("Authorization", token)
+                .pathParam("id",response.jsonPath().getInt("entryiId"))
+                .when().delete(Environment.BASE_URL + "/api/teams/{id}")
+                .then().statusCode(200);
     }
 
 }
